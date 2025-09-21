@@ -1,33 +1,63 @@
 {
-  "name": "vite-react-typescript-starter",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "name": "tourist-safety-backend",
+  "version": "1.0.0",
+  "description": "Smart Tourist Safety Monitoring & Incident Response System Backend",
+  "main": "index.js",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
+    "dev": "supabase start",
+    "build": "echo 'Building Edge Functions...' && supabase functions deploy --no-verify-jwt",
+    "deploy": "npm run deploy:functions",
+    "deploy:functions": "supabase functions deploy auth-register && supabase functions deploy auth-login && supabase functions deploy location-update && supabase functions deploy geofence-check && supabase functions deploy geofence-manage && supabase functions deploy incident-report && supabase functions deploy incident-manage && supabase functions deploy alert-send",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:diff": "supabase db diff",
+    "migration:new": "supabase migration new",
+    "functions:serve": "supabase functions serve",
+    "functions:logs": "supabase functions logs",
+    "test": "echo 'No tests specified yet'",
+    "lint": "echo 'No linting configured yet'",
+    "type-check": "echo 'Type checking Edge Functions...' && find supabase/functions -name '*.ts' -exec deno check {} \\;",
+    "setup": "npm run db:reset && npm run deploy:functions",
+    "local:start": "supabase start",
+    "local:stop": "supabase stop",
+    "local:status": "supabase status"
   },
-  "dependencies": {
-    "lucide-react": "^0.344.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+  "keywords": [
+    "tourist-safety",
+    "incident-response",
+    "geofencing",
+    "emergency-system",
+    "supabase",
+    "edge-functions",
+    "smart-india-hackathon",
+    "sih5002"
+  ],
+  "author": "Smart India Hackathon Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/tourist-safety-backend.git"
   },
+  "bugs": {
+    "url": "https://github.com/your-username/tourist-safety-backend/issues"
+  },
+  "homepage": "https://github.com/your-username/tourist-safety-backend#readme",
   "devDependencies": {
-    "@eslint/js": "^9.9.1",
-    "@types/react": "^18.3.5",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
-    "autoprefixer": "^10.4.18",
-    "eslint": "^9.9.1",
-    "eslint-plugin-react-hooks": "^5.1.0-rc.0",
-    "eslint-plugin-react-refresh": "^0.4.11",
-    "globals": "^15.9.0",
-    "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5.5.3",
-    "typescript-eslint": "^8.3.0",
-    "vite": "^5.4.2"
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "supabase": {
+    "functions": [
+      "auth-register",
+      "auth-login",
+      "location-update",
+      "geofence-check",
+      "geofence-manage",
+      "incident-report",
+      "incident-manage",
+      "alert-send"
+    ]
   }
 }
