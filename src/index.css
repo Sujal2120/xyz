@@ -1,3 +1,27 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Import theme system */
+@import './styles/themes.css';
+
+/* Override Tailwind with theme variables */
+@layer base {
+  html {
+    color-scheme: light dark;
+  }
+  
+  body {
+    @apply transition-colors duration-200;
+  }
+}
+
+/* Custom utility classes for theme system */
+@layer utilities {
+  .theme-transition {
+    transition: background-color 200ms ease-in-out, 
+                border-color 200ms ease-in-out, 
+                color 200ms ease-in-out,
+                box-shadow 200ms ease-in-out;
+  }
+}
