@@ -1,41 +1,30 @@
 /*
   # Create Profiles Table
 
-  1. New Tables
-    - `profiles`
-      - `id` (uuid, primary key, references auth.users)
-      - `name` (text, required)
-      - `role` (enum: tourist, admin)
-      - `digital_id` (text, unique blockchain-style ID)
-      - `phone` (text, optional)
-      - `emergency_contact` (text, optional)
-      - `location` (geography point for current location)
-      - `status` (enum: active, inactive, alert)
-      - `created_at` (timestamp)
-      - `updated_at` (timestamp)
+  1. New Table: profiles
+    - id (uuid, primary key, references auth.users)
+    - name (text, required)
+    - role (user_role, default 'tourist')
+    - digital_id (text, unique, blockchain-style ID)
+    - phone (text, optional)
+    - emergency_contact (text, optional)
+    - location (geography point, current location)
+    - status (user_status, default 'active')
+    - created_at (timestamptz)
+    - updated_at (timestamptz)
 
   2. Security
-    - Enable RLS on `profiles` table
-    - Users can read and update their own profile
+    - Enable RLS
+    - Users can read/update own profile
     - Admins can read all profiles
+
+  3. Functions
+    - Auto-generate digital ID on insert
+    - Update timestamp trigger
 */
 
--- Create user role enum
-DO $$ BEGIN
-  CREATE TYPE user_role AS ENUM ('tourist', 'admin');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
--- Create user status enum
-DO $$ BEGIN
-  CREATE TYPE user_status AS ENUM ('active', 'inactive', 'alert');
-EXCEPTION
-  WHEN duplicate_object THEN null;
-END $$;
-
 -- Create profiles table
-CREATE TABLE IF NOT EXISTS profiles (
+CREATE TABLE profiles (
   id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   name text NOT NULL,
   role user_role DEFAULT 'tourist',
@@ -53,20 +42,17 @@ ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 CREATE POLICY "Users can read own profile"
-  ON profiles
-  FOR SELECT
+  ON profiles FOR SELECT
   TO authenticated
   USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile"
-  ON profiles
-  FOR UPDATE
+  ON profiles FOR UPDATE
   TO authenticated
   USING (auth.uid() = id);
 
 CREATE POLICY "Admins can read all profiles"
-  ON profiles
-  FOR SELECT
+  ON profiles FOR SELECT
   TO authenticated
   USING (
     EXISTS (
@@ -75,13 +61,33 @@ CREATE POLICY "Admins can read all profiles"
     )
   );
 
--- Function to generate blockchain-style digital ID
+-- Function to generate digital ID
 CREATE OR REPLACE FUNCTION generate_digital_id()
 RETURNS text AS $$
+DECLARE
+  prefix text := 'DID';
+  timestamp_part text;
+  random_part text;
+  digital_id text;
 BEGIN
-  RETURN 'DID-' || EXTRACT(EPOCH FROM now())::bigint || '-' || upper(substring(gen_random_uuid()::text from 1 for 8));
+  -- Get timestamp part (YYYYMMDD)
+  timestamp_part := to_char(now(), 'YYYYMMDD');
+  
+  -- Generate random part (8 characters)
+  random_part := upper(substring(gen_random_uuid()::text from 1 for 8));
+  
+  -- Combine parts
+  digital_id := prefix || '-' || timestamp_part || '-' || random_part;
+  
+  -- Ensure uniqueness
+  WHILE EXISTS (SELECT 1 FROM profiles WHERE profiles.digital_id = digital_id) LOOP
+    random_part := upper(substring(gen_random_uuid()::text from 1 for 8));
+    digital_id := prefix || '-' || timestamp_part || '-' || random_part;
+  END LOOP;
+  
+  RETURN digital_id;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Function to handle new user registration
 CREATE OR REPLACE FUNCTION handle_new_user()
@@ -98,8 +104,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Trigger for new user registration
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
+CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
@@ -112,7 +117,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Trigger for updated_at
+-- Update timestamp trigger
 CREATE TRIGGER update_profiles_updated_at
   BEFORE UPDATE ON profiles
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
