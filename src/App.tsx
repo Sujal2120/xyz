@@ -21,7 +21,7 @@ function App() {
       <LanguageProvider>
         <UserProvider>
           <SystemProvider>
-            <div className="min-h-screen theme-bg-primary theme-transition">
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
               <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
               
               <main>
