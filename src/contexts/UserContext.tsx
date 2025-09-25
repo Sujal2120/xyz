@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { useSupabase } from '../hooks/useSupabase';
 
 export interface User {
   id: string;
@@ -23,24 +24,39 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const { user: supabaseUser, profile, loading, signUp, signIn, signOut } = useSupabase();
+  
+  const user = supabaseUser && profile ? {
+    id: supabaseUser.id,
+    name: profile.name,
+    email: supabaseUser.email || '',
+    role: profile.role,
+    phone: profile.phone,
+    digitalId: profile.digital_id,
+    emergencyContact: profile.emergency_contact,
+    status: profile.status,
+    location: profile.location ? { lat: 0, lng: 0 } : undefined // Parse PostGIS data
+  } : null;
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const login = async (email: string, password: string) => {
+    return await signIn(email, password);
   };
 
-  const logout = () => {
-    setUser(null);
+  const register = async (email: string, password: string, userData: any) => {
+    return await signUp(email, password, userData);
+  };
+
+  const logout = async () => {
+    await signOut();
   };
 
   const updateUser = (updates: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...updates });
-    }
+    // This would update the profile in Supabase
+    console.log('Update user:', updates);
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout, updateUser }}>
+    <UserContext.Provider value={{ user, login, logout, updateUser, register, loading }}>
       {children}
     </UserContext.Provider>
   );

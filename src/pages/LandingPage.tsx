@@ -2,6 +2,7 @@ import React from 'react';
 import { Shield, Eye, MapPin, Zap, Users, Globe, Lock, Smartphone } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useUser } from '../contexts/UserContext';
+import { DemoData } from '../components/DemoData';
 import type { Page } from '../App';
 
 interface LandingPageProps {
@@ -13,12 +14,8 @@ export function LandingPage({ setCurrentPage }: LandingPageProps) {
   const { login } = useUser();
 
   const handleAuthorityLogin = () => {
-    login({
-      id: 'auth-1',
-      name: 'Officer Smith',
-      email: 'officer@tourism.gov.in',
-      role: 'authority'
-    });
+    // For demo purposes, simulate authority login
+    console.log('Authority login - would redirect to login form');
     setCurrentPage('authority-dashboard');
   };
 
@@ -160,6 +157,13 @@ export function LandingPage({ setCurrentPage }: LandingPageProps) {
               <p className="text-gray-600 text-sm">Smart wearables with health monitoring and SOS features</p>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Demo Data Section */}
+      <div className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <DemoData />
         </div>
       </div>
 
