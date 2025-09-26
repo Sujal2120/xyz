@@ -82,15 +82,16 @@ supabase db diff
 
 #### Deploy All Functions
 ```bash
-# Deploy all functions at once
+# Deploy individual functions (correct method)
 supabase functions deploy auth-register
 supabase functions deploy auth-login
+supabase functions deploy incident-report
 supabase functions deploy location-update
 supabase functions deploy geofence-check
-supabase functions deploy geofence-manage
-supabase functions deploy incident-report
-supabase functions deploy incident-manage
 supabase functions deploy alert-send
+
+# IMPORTANT: import_map.json is NOT a deployable function
+# It's automatically used by Deno runtime when functions are deployed
 ```
 
 #### Deploy Individual Function

@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -7,127 +7,73 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-interface RegisterRequest {
-  email: string
-  password: string
-  name: string
-  phone?: string
-  role?: 'tourist' | 'admin'
-  emergencyContact?: string
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { email, password, name, phone, role = 'tourist', emergencyContact }: RegisterRequest = await req.json()
+    const { email, password, name, phone, emergency_contact } = await req.json()
 
-    // Validate required fields
-    if (!email || !password || !name) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Email, password, and name are required' 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Create user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+    // Create user account
+    const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
       email,
       password,
-      user_metadata: {
-        name,
-        role
-      }
+      email_confirm: true,
     })
 
     if (authError) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: authError.message 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      throw authError
     }
 
-    // Update profile with additional information
-    if (authData.user) {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          phone,
-          emergency_contact: emergencyContact
-        })
-        .eq('id', authData.user.id)
+    // Create profile
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .insert({
+        id: authData.user.id,
+        name,
+        phone,
+        emergency_contact,
+        role: 'tourist'
+      })
+      .select()
+      .single()
 
-      if (profileError) {
-        console.error('Profile update error:', profileError)
-      }
-
-      // Get the complete profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single()
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          user: {
-            id: authData.user.id,
-            email: authData.user.email,
-            name: profile?.name,
-            role: profile?.role,
-            digitalId: profile?.digital_id,
-            phone: profile?.phone,
-            emergencyContact: profile?.emergency_contact
-          }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    if (profileError) {
+      throw profileError
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Failed to create user' 
+      JSON.stringify({
+        success: true,
+        data: {
+          user: authData.user,
+          profile: profile
+        },
+        message: 'Tourist registered successfully'
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       }
     )
 
   } catch (error) {
-    console.error('Registration error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Internal server error' 
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        code: 'REGISTRATION_ERROR'
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       }
     )
   }

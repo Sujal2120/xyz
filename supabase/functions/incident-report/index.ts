@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -7,205 +7,71 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-interface IncidentReportRequest {
-  type: 'emergency' | 'medical' | 'theft' | 'harassment' | 'lost' | 'other'
-  description?: string
-  latitude?: number
-  longitude?: number
-  severity?: 'low' | 'medium' | 'high' | 'critical'
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    // Get the authorization header
-    const authHeader = req.headers.get('Authorization')
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Authorization header required' 
-        }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: authHeader }
-        }
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    // Get JWT token from Authorization header
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) {
+      throw new Error('Authorization header required')
+    }
+
+    const token = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser(token)
     
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Invalid or expired token' 
-        }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+      throw new Error('Invalid token')
     }
 
-    const { type, description, latitude, longitude, severity = 'medium' }: IncidentReportRequest = await req.json()
-
-    // Validate required fields
-    if (!type) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Incident type is required' 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Get user's current location if not provided
-    let incidentLocation = null
-    if (latitude && longitude) {
-      incidentLocation = `POINT(${longitude} ${latitude})`
-    } else {
-      // Try to get user's last known location
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('location')
-        .eq('id', user.id)
-        .single()
-      
-      if (profile?.location) {
-        incidentLocation = profile.location
-      }
-    }
+    const { type, description, latitude, longitude, severity } = await req.json()
 
     // Create incident
-    const { data: incident, error: incidentError } = await supabase
+    const { data: incident, error: incidentError } = await supabaseClient
       .from('incidents')
       .insert({
         tourist_id: user.id,
         type,
         description,
-        location: incidentLocation,
-        severity,
-        status: 'pending'
+        location: `POINT(${longitude} ${latitude})`,
+        severity: severity || 'medium'
       })
-      .select(`
-        *,
-        profiles:tourist_id (
-          name,
-          phone,
-          digital_id,
-          emergency_contact
-        )
-      `)
+      .select()
       .single()
 
     if (incidentError) {
-      console.error('Incident creation error:', incidentError)
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Failed to create incident report' 
-        }),
-        { 
-          status: 500, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Create alert for authorities
-    const alertMessage = `${severity.toUpperCase()} INCIDENT: ${type} reported by ${incident.profiles?.name || 'Tourist'} (ID: ${incident.profiles?.digital_id})`
-    
-    const { error: alertError } = await supabase
-      .from('alerts')
-      .insert({
-        incident_id: incident.id,
-        authority_contact: 'emergency@tourism.gov.in',
-        message: alertMessage,
-        alert_type: severity === 'critical' ? 'call' : 'push',
-        status: 'pending'
-      })
-
-    if (alertError) {
-      console.error('Alert creation error:', alertError)
-    }
-
-    // Send real-time notification to admin dashboards
-    const { error: realtimeError } = await supabase
-      .channel('incidents')
-      .send({
-        type: 'broadcast',
-        event: 'new_incident',
-        payload: {
-          incident,
-          severity,
-          timestamp: new Date().toISOString()
-        }
-      })
-
-    if (realtimeError) {
-      console.error('Realtime notification error:', realtimeError)
-    }
-
-    // Update user status to alert if critical
-    if (severity === 'critical') {
-      await supabase
-        .from('profiles')
-        .update({ status: 'alert' })
-        .eq('id', user.id)
+      throw incidentError
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        incident: {
-          id: incident.id,
-          type: incident.type,
-          description: incident.description,
-          severity: incident.severity,
-          status: incident.status,
-          createdAt: incident.created_at,
-          location: incident.location ? {
-            latitude: latitude || null,
-            longitude: longitude || null
-          } : null
-        },
-        message: 'Incident reported successfully. Authorities have been notified.'
+        data: incident,
+        message: 'Incident reported successfully'
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       }
     )
 
   } catch (error) {
-    console.error('Incident report error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Internal server error' 
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        code: 'INCIDENT_REPORT_ERROR'
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       }
     )
   }

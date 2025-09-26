@@ -89,15 +89,15 @@ supabase db reset
 ### 3. Deploy Edge Functions
 
 ```bash
-# Deploy all functions
+# Deploy individual functions (correct way)
 supabase functions deploy auth-register
 supabase functions deploy auth-login
-supabase functions deploy location-update
-supabase functions deploy geofence-check
-supabase functions deploy geofence-manage
 supabase functions deploy incident-report
-supabase functions deploy incident-manage
+supabase functions deploy location-update 
+supabase functions deploy geofence-check
 supabase functions deploy alert-send
+
+# Note: Do NOT try to deploy import_map.json - it's a configuration file, not a function
 ```
 
 ### 4. Environment Variables

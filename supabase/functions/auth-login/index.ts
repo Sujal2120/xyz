@@ -1,4 +1,4 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
@@ -7,112 +7,65 @@ const corsHeaders = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 }
 
-interface LoginRequest {
-  email: string
-  password: string
-}
-
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
   }
 
   try {
-    const supabase = createClient(
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     )
 
-    const { email, password }: LoginRequest = await req.json()
+    const { email, password } = await req.json()
 
-    // Validate required fields
-    if (!email || !password) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Email and password are required' 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
-    }
-
-    // Sign in with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabaseClient.auth.signInWithPassword({
       email,
-      password
+      password,
     })
 
-    if (authError) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: authError.message 
-        }),
-        { 
-          status: 401, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    if (error) {
+      throw error
     }
 
-    if (authData.user && authData.session) {
-      // Get user profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', authData.user.id)
-        .single()
+    // Get user profile
+    const { data: profile, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single()
 
-      if (profileError) {
-        console.error('Profile fetch error:', profileError)
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          token: authData.session.access_token,
-          user: {
-            id: authData.user.id,
-            email: authData.user.email,
-            name: profile?.name,
-            role: profile?.role,
-            digitalId: profile?.digital_id,
-            phone: profile?.phone,
-            emergencyContact: profile?.emergency_contact,
-            status: profile?.status
-          }
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    if (profileError) {
+      throw profileError
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Login failed' 
+      JSON.stringify({
+        success: true,
+        data: {
+          user: data.user,
+          session: data.session,
+          profile: profile
+        },
+        message: 'Login successful'
       }),
-      { 
-        status: 401, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
       }
     )
 
   } catch (error) {
-    console.error('Login error:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: 'Internal server error' 
+      JSON.stringify({
+        success: false,
+        error: error.message,
+        code: 'LOGIN_ERROR'
       }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 400,
       }
     )
   }
