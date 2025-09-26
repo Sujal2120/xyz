@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { useSupabase } from '../hooks/useSupabase';
 
 export interface User {
   id: string;
@@ -16,7 +15,9 @@ export interface User {
 
 interface UserContextType {
   user: User | null;
+  loading: boolean;
   login: (userData: User) => void;
+  register: (email: string, password: string, userData: any) => Promise<any>;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
 }
@@ -24,35 +25,34 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const { user: supabaseUser, profile, loading, signUp, signIn, signOut } = useSupabase();
-  
-  const user = supabaseUser && profile ? {
-    id: supabaseUser.id,
-    name: profile.name,
-    email: supabaseUser.email || '',
-    role: profile.role,
-    phone: profile.phone,
-    digitalId: profile.digital_id,
-    emergencyContact: profile.emergency_contact,
-    status: profile.status,
-    location: profile.location ? { lat: 0, lng: 0 } : undefined // Parse PostGIS data
-  } : null;
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const login = async (email: string, password: string) => {
-    return await signIn(email, password);
+  const login = (userData: User) => {
+    setUser(userData);
   };
 
   const register = async (email: string, password: string, userData: any) => {
-    return await signUp(email, password, userData);
+    setLoading(true);
+    try {
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      return { success: true, data: userData };
+    } catch (error) {
+      return { success: false, error };
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
-    await signOut();
+    setUser(null);
   };
 
   const updateUser = (updates: Partial<User>) => {
-    // This would update the profile in Supabase
-    console.log('Update user:', updates);
+    if (user) {
+      setUser({ ...user, ...updates });
+    }
   };
 
   return (

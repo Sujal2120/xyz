@@ -10,7 +10,6 @@ import { LanguageProvider } from './contexts/LanguageContext';
 import { UserProvider } from './contexts/UserContext';
 import { SystemProvider } from './contexts/SystemContext';
 import { ThemeProvider } from './contexts/ThemeContext';
-import { SupabaseStatus } from './components/SupabaseStatus';
 
 export type Page = 'landing' | 'register' | 'tourist-dashboard' | 'authority-dashboard' | 'emergency' | 'iot';
 
@@ -24,12 +23,6 @@ function App() {
           <SystemProvider>
             <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
               <Header currentPage={currentPage} setCurrentPage={setCurrentPage} />
-              
-              {/* Supabase Connection Status */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4">
-                <SupabaseStatus />
-              </div>
-              
               <main>
                 {currentPage === 'landing' && <LandingPage setCurrentPage={setCurrentPage} />}
                 {currentPage === 'register' && <TouristRegistration setCurrentPage={setCurrentPage} />}

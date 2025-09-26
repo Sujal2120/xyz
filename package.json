@@ -4,7 +4,7 @@
   "description": "Smart Tourist Safety Monitoring & Incident Response System Backend",
   "main": "index.js",
   "scripts": {
-    "dev": "echo 'Backend API ready. Edge Functions available at your Supabase project URL.' && echo 'Connect to Supabase using the button in the top right to deploy functions.'",
+    "dev": "vite",
     "build": "echo 'Edge Functions built successfully. Deploy via Supabase dashboard.'",
     "deploy": "echo 'Deploy functions via Supabase dashboard or CLI on your local machine.'",
     "deploy:functions": "echo 'Functions ready for deployment. Use Supabase dashboard to deploy.'",
