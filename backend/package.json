@@ -1,0 +1,52 @@
+{
+  "name": "tourist-safety-backend",
+  "version": "1.0.0",
+  "description": "Smart Tourist Safety Monitoring & Incident Response System Backend",
+  "main": "index.js",
+  "scripts": {
+    "deploy:functions": "supabase functions deploy --project-ref YOUR_PROJECT_REF",
+    "deploy:auth-register": "supabase functions deploy auth-register",
+    "deploy:auth-login": "supabase functions deploy auth-login",
+    "deploy:incident-report": "supabase functions deploy incident-report",
+    "deploy:location-update": "supabase functions deploy location-update",
+    "deploy:geofence-check": "supabase functions deploy geofence-check",
+    "deploy:alert-send": "supabase functions deploy alert-send",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "db:diff": "supabase db diff",
+    "migration:new": "supabase migration new",
+    "functions:serve": "supabase functions serve",
+    "functions:logs": "supabase functions logs",
+    "local:start": "supabase start",
+    "local:stop": "supabase stop",
+    "local:status": "supabase status"
+  },
+  "keywords": [
+    "tourist-safety",
+    "incident-response",
+    "geofencing",
+    "emergency-system",
+    "supabase",
+    "edge-functions",
+    "smart-india-hackathon",
+    "sih5002"
+  ],
+  "author": "Smart India Hackathon Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "supabase": {
+    "functions": [
+      "auth-register",
+      "auth-login",
+      "location-update",
+      "geofence-check",
+      "incident-report",
+      "alert-send"
+    ]
+  }
+}

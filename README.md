@@ -1,310 +1,232 @@
 # Smart Tourist Safety Monitoring & Incident Response System
 
-A comprehensive backend solution for SIH5002 using Supabase (PostgreSQL + Auth + Edge Functions) with framework-agnostic REST APIs.
+A comprehensive full-stack solution for SIH5002 using React frontend and Supabase backend with PostgreSQL + PostGIS for geospatial data.
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
-- **Database**: PostgreSQL with PostGIS for geospatial data
-- **Authentication**: Supabase Auth with JWT tokens
-- **APIs**: Edge Functions (TypeScript/Deno)
-- **Real-time**: Supabase Realtime for live updates
-- **Security**: Row Level Security (RLS) policies
+```
+tourist-safety-system/
+├── frontend/                 # React + TypeScript Frontend
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   ├── pages/          # Page components
+│   │   ├── contexts/       # React contexts
+│   │   ├── hooks/          # Custom hooks
+│   │   ├── lib/            # Utilities and Supabase client
+│   │   └── styles/         # CSS and theme files
+│   ├── public/             # Static assets
+│   └── package.json        # Frontend dependencies
+│
+├── backend/                 # Supabase Backend
+│   ├── supabase/
+│   │   ├── functions/      # Edge Functions (API endpoints)
+│   │   ├── migrations/     # Database migrations
+│   │   └── config.toml     # Supabase configuration
+│   └── package.json        # Backend scripts and dependencies
+│
+├── docs/                   # Documentation
+│   ├── API_DOCUMENTATION.md
+│   ├── DEPLOYMENT_GUIDE.md
+│   ├── EXAMPLES.md
+│   └── DARK_MODE_IMPLEMENTATION.md
+│
+└── README.md              # This file
+```
+
+## 🚀 Quick Start
+
+### Frontend Development
+
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies
+npm install
+
+# Start development server
+npm run dev
+```
+
+### Backend Setup
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Install Supabase CLI (if not installed)
+npm install -g @supabase/cli
+
+# Initialize Supabase (if not done)
+supabase init
+
+# Link to your Supabase project
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Apply database migrations
+supabase db push
+
+# Deploy Edge Functions
+npm run deploy:functions
+```
+
+## 🌟 Features
+
+### Frontend Features
+- ✅ **Modern React UI** - Built with TypeScript and Tailwind CSS
+- ✅ **Dark Mode Support** - Complete theme system with persistence
+- ✅ **Multi-language** - Support for 10+ Indian regional languages
+- ✅ **Responsive Design** - Works perfectly on all devices
+- ✅ **Real-time Updates** - Live data synchronization with Supabase
+- ✅ **Progressive Web App** - Offline support and mobile installation
+
+### Backend Features
+- ✅ **Supabase Integration** - PostgreSQL with PostGIS for geospatial data
+- ✅ **Edge Functions** - Serverless API endpoints with TypeScript
+- ✅ **Real-time Database** - Live updates and subscriptions
+- ✅ **Authentication** - JWT-based user management
+- ✅ **Row Level Security** - Database-level security policies
+- ✅ **Geographic Queries** - PostGIS for location-based features
+
+### Core System Features
+- 🚨 **Emergency SOS System** - Instant alerts to authorities
+- 📍 **Real-time Location Tracking** - GPS monitoring with history
+- 🛡️ **Geofence Monitoring** - Safe/danger zone detection
+- 📊 **Authority Dashboard** - Real-time incident management
+- 🔐 **Digital ID System** - Blockchain-style tourist identification
+- 📱 **IoT Integration** - Device monitoring and health data
+- 🌐 **Multi-channel Alerts** - SMS, Email, Push notifications
+
+## 🔧 Environment Setup
+
+### Frontend Environment (.env)
+```env
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+VITE_NODE_ENV=development
+```
+
+### Backend Environment (.env)
+```env
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_ANON_KEY=your-anon-key-here
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+```
 
 ## 📊 Database Schema
 
 ### Core Tables
-
 1. **profiles** - User profiles with blockchain-style digital IDs
 2. **geofences** - Safe/danger zones with PostGIS geometry
-3. **incidents** - Emergency reports and incidents
-4. **alerts** - Notification system for authorities
+3. **incidents** - Emergency reports and incident management
+4. **alerts** - Multi-channel notification system
+5. **user_preferences** - Theme and user settings
+6. **location_history** - GPS tracking with automatic cleanup
 
 ### Key Features
-
 - PostGIS integration for geospatial queries
 - Blockchain-style digital ID generation
 - Comprehensive RLS policies
 - Automated triggers and functions
-
-## 🔐 Authentication & Authorization
-
-### User Roles
-- **tourist**: Can manage own profile and incidents
-- **admin**: Full access to all data and management functions
-
-### Security Features
-- JWT-based authentication
-- Row Level Security (RLS)
-- Role-based access control
-- Secure API endpoints
+- Real-time subscriptions
 
 ## 🌐 API Endpoints
 
-All endpoints return JSON and are framework-agnostic.
+All endpoints are implemented as Supabase Edge Functions:
 
 ### Authentication
-```
-POST /functions/v1/auth-register
-POST /functions/v1/auth-login
-```
+- `POST /functions/v1/auth-register` - Tourist registration
+- `POST /functions/v1/auth-login` - User authentication
 
 ### Location & Geofencing
-```
-POST /functions/v1/location-update
-POST /functions/v1/geofence-check
-GET  /functions/v1/geofence-manage
-POST /functions/v1/geofence-manage
-```
+- `POST /functions/v1/location-update` - Update GPS location
+- `POST /functions/v1/geofence-check` - Check safe/danger zones
 
 ### Incident Management
-```
-POST /functions/v1/incident-report
-GET  /functions/v1/incident-manage/:id
-PUT  /functions/v1/incident-manage/:id
-```
+- `POST /functions/v1/incident-report` - Report emergencies
+- `GET /functions/v1/incident-manage/:id` - Get incident details
+- `PUT /functions/v1/incident-manage/:id` - Update incident status
 
 ### Alert System
-```
-POST /functions/v1/alert-send
-```
+- `POST /functions/v1/alert-send` - Send alerts to authorities
 
-## 🚀 Setup Instructions
+## 🚀 Deployment
 
-### 1. Supabase Project Setup
-
-1. Create a new Supabase project
-2. Enable PostGIS extension:
-   ```sql
-   CREATE EXTENSION IF NOT EXISTS postgis;
-   ```
-
-### 2. Database Migration
-
-Run migrations in order:
+### Frontend Deployment
 ```bash
-# Apply all migrations
-supabase db reset
+cd frontend
+npm run build
+# Deploy to Vercel, Netlify, or your preferred hosting
 ```
 
-### 3. Deploy Edge Functions
-
+### Backend Deployment
 ```bash
-# Deploy individual functions (correct way)
-supabase functions deploy auth-register
-supabase functions deploy auth-login
-supabase functions deploy incident-report
-supabase functions deploy location-update 
-supabase functions deploy geofence-check
-supabase functions deploy alert-send
+cd backend
+# Deploy Edge Functions
+supabase functions deploy --project-ref YOUR_PROJECT_REF
 
-# Note: Do NOT try to deploy import_map.json - it's a configuration file, not a function
-```
-
-### 4. Environment Variables
-
-Create `.env` file:
-```env
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-```
-
-## 📱 Frontend Integration Examples
-
-### React/Next.js
-```javascript
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-)
-
-// Register user
-const response = await fetch(`${supabaseUrl}/functions/v1/auth-register`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${supabaseAnonKey}`
-  },
-  body: JSON.stringify({
-    email: 'user@example.com',
-    password: 'password',
-    name: 'John Doe',
-    phone: '+91XXXXXXXXXX'
-  })
-})
-```
-
-### Flutter/Mobile
-```dart
-final response = await http.post(
-  Uri.parse('$supabaseUrl/functions/v1/incident-report'),
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $token',
-  },
-  body: jsonEncode({
-    'type': 'emergency',
-    'description': 'Need immediate help',
-    'latitude': 25.5941,
-    'longitude': 85.1376,
-    'severity': 'critical'
-  }),
-);
-```
-
-### Vanilla JavaScript
-```javascript
-// Check geofence
-fetch(`${SUPABASE_URL}/functions/v1/geofence-check`, {
-  method: 'POST',
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
-  },
-  body: JSON.stringify({
-    latitude: 25.5941,
-    longitude: 85.1376
-  })
-})
-.then(response => response.json())
-.then(data => console.log(data))
-```
-
-## 🔧 API Response Formats
-
-### Success Response
-```json
-{
-  "success": true,
-  "data": { ... },
-  "message": "Operation completed successfully"
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "code": "ERROR_CODE"
-}
-```
-
-## 🛡️ Security Features
-
-### Row Level Security Policies
-
-1. **Profiles**: Users can only access their own profile
-2. **Incidents**: Tourists see only their incidents, admins see all
-3. **Geofences**: Read access for authenticated users, write for admins
-4. **Alerts**: Admin-only access
-
-### Data Protection
-
-- JWT token validation on all endpoints
-- Input sanitization and validation
-- SQL injection prevention
-- CORS configuration for web security
-
-## 📊 Real-time Features
-
-### Supabase Realtime Channels
-
-1. **incidents**: Live incident updates for admin dashboards
-2. **alerts**: Real-time alert notifications
-3. **locations**: Live location tracking (optional)
-
-### WebSocket Integration
-```javascript
-const channel = supabase
-  .channel('incidents')
-  .on('broadcast', { event: 'new_incident' }, (payload) => {
-    console.log('New incident:', payload)
-  })
-  .subscribe()
+# Apply database migrations
+supabase db push --project-ref YOUR_PROJECT_REF
 ```
 
 ## 🧪 Testing
 
-### API Testing with curl
-
+### Frontend Testing
 ```bash
-# Register user
-curl -X POST "${SUPABASE_URL}/functions/v1/auth-register" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${SUPABASE_ANON_KEY}" \
-  -d '{
-    "email": "test@example.com",
-    "password": "password123",
-    "name": "Test User",
-    "phone": "+91XXXXXXXXXX"
-  }'
-
-# Report incident
-curl -X POST "${SUPABASE_URL}/functions/v1/incident-report" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer ${JWT_TOKEN}" \
-  -d '{
-    "type": "emergency",
-    "description": "Need help",
-    "latitude": 25.5941,
-    "longitude": 85.1376,
-    "severity": "high"
-  }'
+cd frontend
+npm run lint          # ESLint checking
+npm run type-check     # TypeScript validation
+npm run test          # Unit tests (when configured)
 ```
 
-## 🚀 Deployment
+### Backend Testing
+```bash
+cd backend
+npm run functions:logs  # View function logs
+supabase db diff       # Check database changes
+```
 
-### Production Checklist
+## 📱 Mobile Integration
 
-1. ✅ Enable RLS on all tables
-2. ✅ Configure CORS for your domains
-3. ✅ Set up environment variables
-4. ✅ Deploy Edge Functions
-5. ✅ Test all API endpoints
-6. ✅ Configure real-time subscriptions
-7. ✅ Set up monitoring and logging
+The system supports integration with:
+- **Flutter** - Complete mobile app development
+- **React Native** - Cross-platform mobile apps
+- **Progressive Web App** - Mobile web experience
+- **IoT Devices** - Wearables and emergency devices
 
-### Scaling Considerations
+## 🔐 Security Features
 
-- Database indexing for performance
-- Connection pooling for high traffic
-- CDN for static assets
-- Load balancing for Edge Functions
-- Monitoring and alerting setup
+- **JWT Authentication** - Secure user sessions
+- **Row Level Security** - Database-level access control
+- **CORS Configuration** - Secure cross-origin requests
+- **Input Validation** - Comprehensive data sanitization
+- **Rate Limiting** - API abuse prevention
 
 ## 📞 Support & Integration
 
-This backend is designed to work with any frontend framework:
-
+This system is designed to work with any frontend framework:
 - ✅ React/Next.js
 - ✅ Vue/Nuxt.js
 - ✅ Angular
 - ✅ Flutter
 - ✅ React Native
 - ✅ Vanilla JavaScript
-- ✅ Any HTTP client
 
-## 🔄 Future Enhancements
+## 🏆 Smart India Hackathon 2024
 
-1. **Third-party Integrations**:
-   - Twilio for SMS alerts
-   - SendGrid for email notifications
-   - FCM for push notifications
-   - Google Maps API integration
+This project addresses **Problem Statement SIH5002** - Smart Tourist Safety Monitoring & Incident Response System with:
 
-2. **Advanced Features**:
-   - ML-based anomaly detection
-   - Predictive analytics
-   - Advanced geospatial queries
-   - Blockchain integration for digital IDs
-
-3. **Performance Optimizations**:
-   - Database query optimization
-   - Caching strategies
-   - API rate limiting
-   - Background job processing
+- **Real-time Monitoring** - Live location tracking and geofencing
+- **Emergency Response** - Instant SOS alerts and incident management
+- **Authority Integration** - Dashboard for tourism authorities
+- **Multi-language Support** - Accessibility for all Indian tourists
+- **IoT Integration** - Wearable devices and smart monitoring
+- **Scalable Architecture** - Cloud-native design for nationwide deployment
 
 ## 📄 License
 
 This project is part of Smart India Hackathon 2024 - Problem Statement SIH5002.
+
+---
+
+**🌟 Ready for production deployment with complete frontend and backend separation!**
